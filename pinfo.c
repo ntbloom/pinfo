@@ -85,9 +85,14 @@ char* read_file(const char* fdesc) {
 int main(int argc, char* argv[]) {
     /* print all pins if no args given */
     if (argc == 1) {
+        int count = 0;
         for (int i = 1; i < 40; i++) {
-            if (pinfo(i) == EXIT_SUCCESS) puts("");
+            if (pinfo(i) == EXIT_SUCCESS) {
+                puts("");
+                count++;
+            }
         }
+        if (count == 0) printf("pinfo: no GPIO pins currently exported\n");
         return EXIT_SUCCESS;
     }
 
