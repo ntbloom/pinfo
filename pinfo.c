@@ -28,6 +28,7 @@ int pinfo(int pin, int print) {
         return EXIT_FAILURE;
     }
     if (print < 0) {
+        free(value);
         return EXIT_SUCCESS;
     }
 
@@ -108,14 +109,12 @@ char* read_file(const char* fdesc) {
         free(contents);
         return NULL;
     }
-    free(contents);
     return contents;
 }
 
 int main(int argc, char* argv[]) {
     /* print all pins if no args given */
     if (argc == 2 && strcmp(argv[1], "--kill") == 0) {
-        printf("argv[1] = %s\n", argv[1]);
         for (int j = 1; j < MAX_PIN; j++) {
             if (pinfo(j, -1) == EXIT_SUCCESS) {
                 printf("killing pin %d\n", j);
