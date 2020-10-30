@@ -4,19 +4,21 @@
 
 #define SYSFS "/sys/class/gpio/gpio"
 #define SYS_LEN 50
+#define MAX_PIN 40
 
 /* This is a very basic script that reads gpio values using the sysfs interface.
  * Specify pin numbers you are interested as command-line arguments and see the
  * value of the various file descriptors.
  */
 
-int pinfo(int);
+int pinfo(int, int);
+int killpin(int);
 char* read_file(const char*);
 
 static int DEBUG = 0;
 
 /* print info about a gpio pin */
-int pinfo(int pin) {
+int pinfo(int pin, int print) {
     char* fvalue = malloc(SYS_LEN);
     sprintf(fvalue, SYSFS "%d/value", pin);
     char* value = read_file(fvalue);
@@ -24,6 +26,9 @@ int pinfo(int pin) {
     if (value == NULL) {
         free(value);
         return EXIT_FAILURE;
+    }
+    if (print < 0) {
+        return EXIT_SUCCESS;
     }
 
     char* fdirection = malloc(SYS_LEN);
@@ -55,6 +60,30 @@ int pinfo(int pin) {
     return EXIT_SUCCESS;
 }
 
+/* kill the pin */
+int killpin(int num) {
+    int err, size, puts, close;
+    if (num < 10) {
+        size = 2;
+    } else {
+        size = 3;
+    }
+    char* buf = malloc(size);
+
+    err = 0;
+    const char* unexport = "/sys/class/gpio/unexport";
+    FILE* killer = fopen(unexport, "r+");
+    if (!killer) {
+        err = 1;
+    }
+    sprintf(buf, "%d", num);
+    puts = fputs(buf, killer) != EOF;
+    close = fclose(killer);
+
+    free(buf);
+    return err | puts | close;
+}
+
 /* read the value of the file */
 char* read_file(const char* fdesc) {
     char* contents = malloc(SYS_LEN);
@@ -79,15 +108,26 @@ char* read_file(const char* fdesc) {
         free(contents);
         return NULL;
     }
+    free(contents);
     return contents;
 }
 
 int main(int argc, char* argv[]) {
     /* print all pins if no args given */
+    if (argc == 2 && strcmp(argv[1], "--kill") == 0) {
+        printf("argv[1] = %s\n", argv[1]);
+        for (int j = 1; j < MAX_PIN; j++) {
+            if (pinfo(j, -1) == EXIT_SUCCESS) {
+                printf("killing pin %d\n", j);
+                killpin(j);
+            }
+        }
+        return EXIT_SUCCESS;
+    }
     if (argc == 1) {
         int count = 0;
-        for (int i = 1; i < 40; i++) {
-            if (pinfo(i) == EXIT_SUCCESS) {
+        for (int i = 1; i < MAX_PIN; i++) {
+            if (pinfo(i, 1) == EXIT_SUCCESS) {
                 puts("");
                 count++;
             }
@@ -97,14 +137,14 @@ int main(int argc, char* argv[]) {
     }
 
     int pin;
-    const char* errmsg = "Please provide an integer from 1 to 40\n";
+    const char* errmsg = "Please provide an integer\n";
     for (int i = 1; i < argc; i++) {
         pin = atoi(argv[i]);
         if (pin < 1) {
             printf("`pinfo %s`: %s", argv[i], errmsg);
             return EXIT_SUCCESS;
         }
-        if (pinfo(pin) != EXIT_SUCCESS) {
+        if (pinfo(pin, 1) != EXIT_SUCCESS) {
             printf("pinfo: gpio pin %d doesn't exist or is not exported\n",
                    pin);
         }

@@ -16,9 +16,17 @@ VFLAGS += --show-reachable=yes
 VFLAGS += --show-possibly-lost=yes
 VFLAGS += --undef-value-errors=yes
 
+EXPORT = /sys/class/gpio/export
+
 memcheck: pinfo
-	#@valgrind $(VFLAGS) ./pinfo 2 18 25 abc
+	@echo 18 > $(EXPORT)
+	@echo 19 > $(EXPORT)
+	@echo 20 > $(EXPORT)
+	@echo "Testing pinfo with normal printing"
 	@valgrind $(VFLAGS) ./pinfo
+	@echo "==================================="
+	echo "Testing pinfo with --kill flag"
+	@valgrind $(VFLAGS) ./pinfo --kill
 	@echo "Memory check passed"
 
 test: pinfo
