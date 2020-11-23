@@ -34,7 +34,7 @@ $ pinfo 18 19
 
 #### or just see what all of your pins are doing
 
-````sh
+```sh
 $ pinfo
 # Pin 1
 #     direction:      out
@@ -76,4 +76,3 @@ $ pinfo --kill
 $ pinfo
 # pinfo: no GPIO pins currently exported
 ```
-````
